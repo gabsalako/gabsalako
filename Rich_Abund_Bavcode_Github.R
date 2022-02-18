@@ -392,7 +392,7 @@ Rich_Mod_TrainFacsom =DFMod_Richsom_combFac[picked_RichModTRFsom,]
 Rich_Test_ModFacsom =DFMod_Richsom_combFac[-picked_RichModTRFsom,]
 Rich_Modfac_TrainDFsom <- data.frame(Rich_Mod_TrainFacsom)
 Rich_Test_ModFacsom <- data.frame(Rich_Test_ModFacsom)
-Rich_Modfac_TrainDFsom[is.na(Rich_Modfac_TrainDFsom[])] <- 0 #very essential for the algorithm does not tolerate NA
+Rich_Modfac_TrainDFsom[is.na(Rich_Modfac_TrainDFsom[])] <- 0 #very essential for some algorithm does not tolerate NA
 Rich_Modfac_TrainDFsom[,'EUNIS_Fac_N'] = as.factor(Rich_Modfac_TrainDFsom[,'EUNIS_Fac_N'])#categorical
 summary(Rich_Modfac_TrainDFsom)
 #GBM
