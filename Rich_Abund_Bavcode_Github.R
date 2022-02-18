@@ -32,7 +32,7 @@ library(performance)#comparing model performance
 library(dominanceanalysis)
 setwd("~/GBM_code_Abundance_2")
 list.files()
-
+#environmental variables
 Alt <- raster("Alt_res.asc")
 SoilMoisture <- raster("ResMsk_SM.asc")
 LULC <- raster("re_LULC2_output.asc")
@@ -134,11 +134,10 @@ plot(pred_Abund_Bav)
 pred_abund_BavRF2 <- predict(EnvStackFac_Som1, Abund_Bav_RF2)
 plot(pred_abund_BavRF2)
 #GLM
-GlM_Abund_Bav <- glm(Ave..Abundance_Bav ~ EUNIS_Fac_N + Mod_Ph + Soil_AirC + ResMsk_SM + Bio12_output 
+GLM_Abund_Bav <- glm(Ave..Abundance_Bav ~ EUNIS_Fac_N + Mod_Ph + Soil_AirC + ResMsk_SM + Bio12_output 
                      + SOM + Bio1_output + Mod_Silt + Mod_Clay + Soil_Depth, data = DF_Abund_Bav_comb)#Use GLM
-pred_GlM_AbundBav <- predict(EnvStackFac_Som1, GlM_Abund_Bav)
-Abundance_GLM <- pred_GlM_AbundBav
-plot(pred_GlM_AbundBav)
+pred_GLM_AbundBav <- predict(EnvStackFac_Som1, GLM_Abund_Bav)
+plot(pred_GLM_AbundBav)
 summary(GAM_Abund_Bav)
 GLMgau_Abund_Bav <- glm(Ave..Abundance_Bav ~ EUNIS_Fac_N + Mod_Ph + Soil_AirC + ResMsk_SM + Bio12_output 
                         + SOM + Bio1_output + Mod_Silt + Mod_Clay + Soil_Depth,family = "gaussian", data = DF_Abund_Bav_comb)
@@ -230,7 +229,7 @@ Abundance_GBM <- pred_GBM_Bav
 
 writeRaster(pred_Abund_BavTr, filename = "Abundance_BavT_Pred.asc", format='ascii', overwrite=TRUE)#convert to ASCII and save line 1153
 writeRaster(pred_Abund_Bav, filename = "Abundance_Bav_Pred.asc", format='ascii', overwrite=TRUE)#convert to ASCII and save line 1110
-writeRaster(pred_GAM_AbundBav, filename = "Abundance_BavGAM.asc", format='ascii', overwrite=TRUE)#convert to ASCII and save line 1116
+writeRaster(pred_GLM_AbundBav, filename = "Abundance_BavGAM.asc", format='ascii', overwrite=TRUE)#convert to ASCII and save line 1116
 writeRaster(pred_GBM_Bav, filename = "Abundance_BavGBM.asc", format='ascii', overwrite=TRUE)#convert to ASCII and save line 1116
 
 #rename and reload
@@ -281,7 +280,6 @@ AUCLRM_Abund_BavRF <- lrm(Ave..Abundance_Bav  ~ Abundance_Bav, data = DF_Prd_Abu
 #Pr(> chi2) <0.0001    gr     205.661    gamma   0.727    
 #gp       0.447    tau-a   0.721    
 #Brier    0.071                     
-#*8
 
 #plot the predicted and observed graph with ggplot (Dataframe, the prediction on x axis and observed on y axis)
 ggplot(DF_Prd_Abund_Bav,aes(x = Abundance_BavT_Pred, y = Ave..Abundance_Bav)) + geom_point() +geom_smooth(method = "lm")
