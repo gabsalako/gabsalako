@@ -71,7 +71,7 @@ setwd("~/GBM_code_Abundance_2")
 list.files()
 
 #Abund_BAVaria
-#predictions abundance and richness
+#predictions of abundance and richness
 Abund_BavRfT_pred <- raster("Abundance_BavT_Pred.asc")
 Abund_BavRf_pred <- raster("Abundance_Bav_Pred.asc")#use
 Abund_BavGLM <- raster("Abundance_BavGAM.asc")
@@ -82,16 +82,16 @@ Rich_GAM <- raster("Richness_GAM.asc")
 Rich_GLM <- raster("Rich_GLM.asc")
 
 proj4Str <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-Abund_Bav_csv <- read.csv("Abund_Bav.csv")
+Abund_Bav_csv <- read.csv("Abund_Bav.csv")#load and read excel abundance data
 Abund_Bav_csv[is.na(Abund_Bav_csv[])] <- 0 #remove NA
 Abund_Bav_Points <- SpatialPointsDataFrame(coords = Abund_Bav_csv[,c("Longitude","Latitude")], data = Abund_Bav_csv, proj4string = CRS(proj4Str))
 plot(Abund_Bav_Points)
-EnvStackFac_Som1=stack(HaB_N, SoilMatter, Bio1, Bio12, Soil_Compact, Soil_AirC2, soil_Depth, ModSoilPh, Mod_Clay, Mod_Silt, SoilMoisture)
-RasAbund_BavExt=extract(EnvStackFac_Som1, Abund_Bav_Points)
-Abund_Bav_Comb=cbind(Abund_Bav_Points, RasAbund_BavExt)
-DF_Abund_Bav_comb <- data.frame(Abund_Bav_Comb)
-DF_Abund_Bav_comb[is.na(DF_Abund_Bav_comb[])] <- 0 #some algorithms do not tolerate NA
-DF_Abund_Bav_comb[,'EUNIS_Fac_N'] = as.factor(DF_Abund_Bav_comb[,'EUNIS_Fac_N'])#categorical
+EnvStackFac_Som1=stack(HaB_N, SoilMatter, Bio1, Bio12, Soil_Compact, Soil_AirC2, soil_Depth, ModSoilPh, Mod_Clay, Mod_Silt, SoilMoisture)#stack env. variables
+RasAbund_BavExt=extract(EnvStackFac_Som1, Abund_Bav_Points)#extract values from rasters to points
+Abund_Bav_Comb=cbind(Abund_Bav_Points, RasAbund_BavExt)#combine Abundance points and extract values
+DF_Abund_Bav_comb <- data.frame(Abund_Bav_Comb)#creaate a dataframe 
+DF_Abund_Bav_comb[is.na(DF_Abund_Bav_comb[])] <- 0 #some algorithms do not tolerate NA, so remove posibele NA
+DF_Abund_Bav_comb[,'EUNIS_Fac_N'] = as.factor(DF_Abund_Bav_comb[,'EUNIS_Fac_N'])# add EUNIS habitat as categorical data
 summary(DF_Abund_Bav_comb)
 head(DF_Abund_Bav_comb)
 #Latitude       Longitude      Ave..Abundance_Bav EUNIS.habitat.type.classification  EUNIS_Fac_N       SOM           Bio1_output      Bio12_output     Soil_Compact  
@@ -125,6 +125,7 @@ knitr::kable(head(DF_Abund_Bav_comb, n=10))
 #  |  47.6816|   12.9309|             263.60|Grasslands and lands dominated by forbs, mosses or lichens (Code: E)                      |6           | 11.465095|          81|         1208|     1.804304|  4.780263|   2.684650| 5.052328| 10.998776| 42.95113| 14.392983|     12.9309|    47.6816|TRUE     |
 
 #fitting the model
+#Randomforest
 RF_Abund_Bav <- randomForest(Ave..Abundance_Bav ~ EUNIS_Fac_N + Mod_Ph + Soil_AirC + ResMsk_SM
                              + Bio12_output + SOM + Bio1_output + Mod_Silt + Mod_Clay + Soil_Depth + Soil_Compact, data = DF_Abund_Bav_comb)
 Abund_Bav_RF2 <- randomForest(x= DF_Abund_Bav_comb[,5:15], y= DF_Abund_Bav_comb[,3], ntree = 1000,nodesize = 10, importance = T)
@@ -132,6 +133,7 @@ pred_Abund_Bav <- predict(EnvStackFac_Som1, RF_Abund_Bav)
 plot(pred_Abund_Bav)
 pred_abund_BavRF2 <- predict(EnvStackFac_Som1, Abund_Bav_RF2)
 plot(pred_abund_BavRF2)
+#GLM
 GlM_Abund_Bav <- glm(Ave..Abundance_Bav ~ EUNIS_Fac_N + Mod_Ph + Soil_AirC + ResMsk_SM + Bio12_output 
                      + SOM + Bio1_output + Mod_Silt + Mod_Clay + Soil_Depth, data = DF_Abund_Bav_comb)#Use GLM
 pred_GlM_AbundBav <- predict(EnvStackFac_Som1, GlM_Abund_Bav)
@@ -210,6 +212,7 @@ Abund_Bav_Test2_DF[,'EUNIS_Fac_N'] = as.factor(Abund_Bav_Test2_DF[,'EUNIS_Fac_N'
 summary(Abund_BavTrtest_DF)
 summary(Abund_Bav_Test2_DF)
 ## fiting with train dataset Abund_Bav
+#Randomforest
 Abund_Bav_RFTr <- randomForest(x= Abund_BavTrtest_DF[,5:15], y= Abund_BavTrtest_DF[,3], ntree = 1000,nodesize = 10, importance = T)
 pred_Abund_BavTr <- predict(EnvStackFac_Som1, Abund_Bav_RFTr)
 Abundance_RF <- pred_Abund_BavTr
@@ -322,9 +325,9 @@ GLMgau_Abund_Bav <- glm(Ave..Abundance_Bav ~ EUNIS_Fac_N + Mod_Ph + Soil_AirC + 
 
 summary(GLMgau_Abund_Bav)
 
-################################Richness
+#Richness
 ######################################################################################################################################################################
-######Richness with new som, full datasets and factor variable
+#Richness with new som, full datasets and factor variable
 Rich_csv <- read.csv("Gab_David_Rich.csv")
 Av_Rich_Points <- SpatialPointsDataFrame(coords = Rich_csv[,c("Longitude","Latitude")], data = Rich_csv, proj4string = CRS(proj4Str))
 head(Av_Rich_Points, 3)
@@ -439,21 +442,20 @@ varImpPlot(RF_RichFTR)
 Rich_RF2 <- randomForest(x= Rich_Modfac_TrainDFsom[,5:15], y= Rich_Modfac_TrainDFsom[,3], ntree = 1000,nodesize = 10, importance = T)
 Pred_RichRF2 <- predict(EnvStackFac_Som1, Rich_RF2)
 plot(Pred_RichRF2)
-
-GAM_RichFTR <- gam(Ave..Spp..Richness ~ EUNIS_Fac_N + Mod_Ph + Soil_AirC + ResMsk_SM + Bio12_output + SOM  + Bio1_output + Mod_Silt + Mod_Clay + Soil_Depth, data = Rich_Modfac_TrainDFsom)
-summary(GAM_RichFTR)
-preRichGAM <- predict(EnvStackFac_Som1, GAM_RichFTR)
-plot(preRichGAM)
+#GLM
+GLM_RichFTR <- glm(Ave..Spp..Richness ~ EUNIS_Fac_N + Mod_Ph + Soil_AirC + ResMsk_SM + Bio12_output + SOM  + Bio1_output + Mod_Silt + Mod_Clay + Soil_Depth, data = Rich_Modfac_TrainDFsom)
+summary(GLM_RichFTR)
+pred_Rich_GLM <- predict(EnvStackFac_Som1, GLM_RichFTR)
+plot(pred_Rich_GLM)
 #Stack richness predictions
 Rich_stackPred=stack(pred_Rich_GLM, predGBMRichT, PredRichRF)
 names(Rich_stackPred) <- c("Rich_GLM", "Rich_GBM", "Rich_RF")
 levelplot(Rich_stackPred, at= unique(c(seq(12, 1, length=12), seq(1, 12,length=12))), col.regions = colorRampPalette(c("white", "green", "red", "yellow"))(1e4))#good
 levelplot(Rich_stackPred, at= unique(c(seq(12, 0, length=12), seq(0, 15,length=15))), col.regions = colorRampPalette(c("white", "red", "green", "yellow"))(1e4))#good
 
-#Richness predictions of model algorithms
+#Richness predictions of model algorithms previously saved in ascii and reloaded
 Rich_GBM <- raster( "Richness_GBM.asc")
 Rich_RF <- raster("Richness_RF_som.asc")
-Rich_GAM <- raster("Richness_GAM.asc")
 Rich_GLM <- raster("Rich_GLM.asc")
 
 #prediction dataframe for evaluation
@@ -500,8 +502,6 @@ ggplot(DF_Pred_Rich,aes(x =Richness_RF_som , y = Ave..Spp..Richness)) + geom_poi
 ggplot(DF_Pred_Rich,aes(x =Richness_GBM, y = Ave..Spp..Richness)) + geom_point() +geom_smooth(method = "lm")
 ggplot(DF_Pred_Rich,aes(x =Rich_GLM , y = Ave..Spp..Richness)) + geom_point() +geom_smooth(method = "lm")
 
-
-
 Abund_HaB_stack=stack(Abund_BavRfT_pred, Abund_BavRf_pred, Abund_BavGLM, Abund_Bav_GBM, HaB_N)
 RasAbund_Hab=extract(Abund_HaB_stack, Abund_Bav_Points)
 AbundHab_Comb=cbind(Abund_Bav_Points, RasAbund_Hab)
@@ -509,8 +509,3 @@ DF_AbundHab <- data.frame(AbundHab_Comb)
 DF_AbundHab[is.na(DF_AbundHab[])] <- 0 
 summary(DF_AbundHab)
 
-Hab_plot2 <- ggplot(DF_AbundHab, aes(x =Abundance_Bav_Pred, y = EUNIS_Fac_N )) +
-  geom_boxplot()
-
-Hab_plot +
-  ylim(0, max(DF_AbundHab$Abundance_Bav_Pred))
