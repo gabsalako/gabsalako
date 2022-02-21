@@ -54,9 +54,7 @@ Soil_clay <- raster("Soil_Clay.tif")
 Soil_silt <- raster( "Soil_silt_Clip1.tif")
 SoilMatter <- raster("SOM.asc")
 Habitat <- raster("EUNIS_Hab.asc")
-habitat_F <- as.factor(Habitat)
-Habitat_factor <- raster("EUNIS_Factor.asc")
-HaB_N <- raster("EUNIS_Fac_N.asc")
+HaB_Factor <- raster("EUNIS_Fac_N.asc")
 Mod_Sand <- raster("Mod_Sand.asc")
 Mod_Silt <- raster("Mod_Silt.asc")
 Mod_Clay <- raster("Mod_Clay.asc")
@@ -82,16 +80,24 @@ Rich_GAM <- raster("Richness_GAM.asc")
 Rich_GLM <- raster("Rich_GLM.asc")
 
 proj4Str <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-Abund_Bav_csv <- read.csv("Abund_Bav.csv")#load and read excel abundance data
-Abund_Bav_csv[is.na(Abund_Bav_csv[])] <- 0 #remove NA
+#load and read excel abundance data
+Abund_Bav_csv <- read.csv("Abund_Bav.csv")
+#remove NA
+Abund_Bav_csv[is.na(Abund_Bav_csv[])] <- 0 
 Abund_Bav_Points <- SpatialPointsDataFrame(coords = Abund_Bav_csv[,c("Longitude","Latitude")], data = Abund_Bav_csv, proj4string = CRS(proj4Str))
 plot(Abund_Bav_Points)
-EnvStackFac_Som1=stack(HaB_N, SoilMatter, Bio1, Bio12, Soil_Compact, Soil_AirC2, soil_Depth, ModSoilPh, Mod_Clay, Mod_Silt, SoilMoisture)#stack env. variables
-RasAbund_BavExt=extract(EnvStackFac_Som1, Abund_Bav_Points)#extract values from rasters to points
-Abund_Bav_Comb=cbind(Abund_Bav_Points, RasAbund_BavExt)#combine Abundance points and extract values
-DF_Abund_Bav_comb <- data.frame(Abund_Bav_Comb)#creaate a dataframe 
-DF_Abund_Bav_comb[is.na(DF_Abund_Bav_comb[])] <- 0 #some algorithms do not tolerate NA, so remove posibele NA
-DF_Abund_Bav_comb[,'EUNIS_Fac_N'] = as.factor(DF_Abund_Bav_comb[,'EUNIS_Fac_N'])# add EUNIS habitat as categorical data
+#stack env. variables
+EnvStackFac_Som1=stack(HaB_Factor, SoilMatter, Bio1, Bio12, Soil_Compact, Soil_AirC2, soil_Depth, ModSoilPh, Mod_Clay, Mod_Silt, SoilMoisture)
+#extract values from rasters to points
+#combine Abundance points and extract values
+#creaate a dataframe 
+#some algorithms do not tolerate NA, so remove posibele NA
+#add EUNIS habitat as categorical data
+RasAbund_BavExt=extract(EnvStackFac_Som1, Abund_Bav_Points)
+Abund_Bav_Comb=cbind(Abund_Bav_Points, RasAbund_BavExt)
+DF_Abund_Bav_comb <- data.frame(Abund_Bav_Comb)
+DF_Abund_Bav_comb[is.na(DF_Abund_Bav_comb[])] <- 0 
+DF_Abund_Bav_comb[,'EUNIS_Fac_N'] = as.factor(DF_Abund_Bav_comb[,'EUNIS_Fac_N'])
 summary(DF_Abund_Bav_comb)
 head(DF_Abund_Bav_comb)
 #Latitude       Longitude      Ave..Abundance_Bav EUNIS.habitat.type.classification  EUNIS_Fac_N       SOM           Bio1_output      Bio12_output     Soil_Compact  
@@ -178,8 +184,7 @@ Call:
 # Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 #(Dispersion parameter for gaussian family taken to be 31639.93)
-
-par(mfrow = c(1, 1))
+par(mfrow = c(1, 1)) #or
 par(mfrow = c(4, 3))
 partialPlot(RF_Abund_Bav, DF_Abund_Bav_comb, "Mod_Ph", plot = TRUE)#the model , the train data, the variable to plot
 partialPlot(RF_Abund_Bav, DF_Abund_Bav_comb, "Mod_Clay", plot = TRUE)
@@ -226,11 +231,11 @@ gbm.plot(GBM_Dismo_Bav)
 gbm.plot.fits(GBM_Dismo_Bav)#use for habitat plot
 pred_GBM_Bav <- predict(EnvStackFac_Som1, GBM_Dismo_Bav)
 Abundance_GBM <- pred_GBM_Bav
-
-writeRaster(pred_Abund_BavTr, filename = "Abundance_BavT_Pred.asc", format='ascii', overwrite=TRUE)#convert to ASCII and save line 1153
-writeRaster(pred_Abund_Bav, filename = "Abundance_Bav_Pred.asc", format='ascii', overwrite=TRUE)#convert to ASCII and save line 1110
-writeRaster(pred_GLM_AbundBav, filename = "Abundance_BavGAM.asc", format='ascii', overwrite=TRUE)#convert to ASCII and save line 1116
-writeRaster(pred_GBM_Bav, filename = "Abundance_BavGBM.asc", format='ascii', overwrite=TRUE)#convert to ASCII and save line 1116
+#write to raster as ASCII
+writeRaster(pred_Abund_BavTr, filename = "Abundance_BavT_Pred.asc", format='ascii', overwrite=TRUE)
+writeRaster(pred_Abund_Bav, filename = "Abundance_Bav_Pred.asc", format='ascii', overwrite=TRUE)
+writeRaster(pred_GLM_AbundBav, filename = "Abundance_BavGAM.asc", format='ascii', overwrite=TRUE)
+writeRaster(pred_GBM_Bav, filename = "Abundance_BavGBM.asc", format='ascii', overwrite=TRUE)
 
 #rename and reload
 Abund_BavRfT_pred <- raster("Abundance_BavT_Pred.asc")
@@ -346,7 +351,6 @@ GLM_Rich <- glm(Ave..Spp..Richness ~ EUNIS_Fac_N + Mod_Ph + Soil_AirC + ResMsk_S
 summary(GLM_Rich)#GLM equation for richness extrapolation, full data som
 Family: gaussian 
 #Link function: identity 
-
 Formula:
   Ave..Spp..Richness ~ EUNIS_Fac_N + Mod_Ph + Soil_AirC + ResMsk_SM + 
   Bio12_output + SOM + Bio1_output + Mod_Silt + Mod_Clay + 
@@ -500,10 +504,5 @@ ggplot(DF_Pred_Rich,aes(x =Richness_RF_som , y = Ave..Spp..Richness)) + geom_poi
 ggplot(DF_Pred_Rich,aes(x =Richness_GBM, y = Ave..Spp..Richness)) + geom_point() +geom_smooth(method = "lm")
 ggplot(DF_Pred_Rich,aes(x =Rich_GLM , y = Ave..Spp..Richness)) + geom_point() +geom_smooth(method = "lm")
 
-Abund_HaB_stack=stack(Abund_BavRfT_pred, Abund_BavRf_pred, Abund_BavGLM, Abund_Bav_GBM, HaB_N)
-RasAbund_Hab=extract(Abund_HaB_stack, Abund_Bav_Points)
-AbundHab_Comb=cbind(Abund_Bav_Points, RasAbund_Hab)
-DF_AbundHab <- data.frame(AbundHab_Comb)
-DF_AbundHab[is.na(DF_AbundHab[])] <- 0 
-summary(DF_AbundHab)
+
 
